@@ -23,6 +23,10 @@
 #  -------------------------------------------------------------------
 #
 
-mkdir ~/.gem
-echo -e "---\n:rubygems_api_key: $KEY_RUBYGEMS" > ~/.gem/credentials
-chmod 0600 ~/.gem/credentials
+export CURRENT_VERSION=$(jq -r ".version" package.json)
+yarn standard-version --prerelease 'rc'
+export NEW_VERSION=$(jq -r ".version" package.json)
+ruby ./ci/scripts/version.rb $CURRENT_VERSION $NEW_VERSION
+
+gem build fastlane-plugin-test_report.gemspec
+gem push *.gem
