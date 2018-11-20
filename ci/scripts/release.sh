@@ -53,14 +53,7 @@ if [[ $GITHUB_COMMIT_MESSAGE != *"ci(release): generate CHANGELOG.md for version
     --user $CIRCLE_PROJECT_USERNAME \
     --repo $CIRCLE_PROJECT_REPONAME \
     --tag ${GIT_TAG} \
-    --name "Test Report v${GIT_TAG}" \
-
-    # yarn github-release edit \
-    # --user $CIRCLE_PROJECT_USERNAME \
-    # --repo $CIRCLE_PROJECT_REPONAME \
-    # --tag ${GIT_TAG} \
-    # --name "Test Report v${GIT_TAG}" \
-    # --pre-release
+    --name "Test Report v${GIT_TAG}"
     
     # Update develop branch
     git fetch origin develop

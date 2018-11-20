@@ -33,13 +33,13 @@ reference:
   deploy_beta: &deploy_beta
     run:
       name: Deploy beta version
-      command: echo "deploying beta"
-    
-  release: &release
-    run:
-      name: Release
-      command: echo "running release"
+      command: source ci/scripts/deploy_beta.sh
   
+  deploy_master: &deploy_master
+    run:
+      name: Deploy master version
+      command: source ci/scripts/deploy_master.sh
+
   documentation: &documentation
     run:
       name: Send documentation to gh-pages
