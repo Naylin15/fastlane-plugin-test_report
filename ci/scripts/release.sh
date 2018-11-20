@@ -25,61 +25,55 @@
 
 GITHUB_COMMIT_MESSAGE=$(git log --format=oneline -n 1 ${CIRCLE_SHA1})
 
+# Get version number from package.json
+    export GIT_TAG=$(jq -r ".version" package.json)
+
 if [[ $GITHUB_COMMIT_MESSAGE != *"ci(release): generate CHANGELOG.md for version"* ]]; then
 
     # Generate CHANGELOG.md and increment version
-    IS_PRERELEASE="$( cut -d '-' -f 2 <<< "$CIRCLE_BRANCH" )";
+    IS_PRERELEASE="$( cut -d '-' -f 2 <<< "$GIT_TAG" )";
+
     if [[ $CIRCLE_BRANCH != "$IS_PRERELEASE" ]]; then
         PREFIX_PRERELEASE="$( cut -d '.' -f 1 <<< "$IS_PRERELEASE" )";
         yarn standard-version --skip.bump=true -m "ci(release): generate CHANGELOG.md for version %s" 
         # --prerelease "$PREFIX_PRERELEASE"
     else
-        yarn standard-version -m "ci(release): generate CHANGELOG.md for version %s"
+        yarn standard-version --skip.bump=true -m "ci(release): generate CHANGELOG.md for version %s"
     fi
-    # Get version number from package.json
-    export GIT_TAG=$(jq -r ".version" package.json)
 
     # Copy CHANGELOG.md to gh-pages branch
     yarn gh-pages --dist ./ --src CHANGELOG.md --dest ./_includes/ --add -m "ci(docs): generate CHANGELOG.md for version ${GIT_TAG}"
+    
     # Push commits and tags to origin branch
     git push --follow-tags origin $CIRCLE_BRANCH
+    
     # Create release with conventional-github-releaser
     yarn conventional-github-releaser -p angular -t $GITHUB_TOKEN
-    # get gem path
-    # GEM=$(find ./ -name 'fastlane-plugin-test_report.gem')
-    
-    # Update release name
+
+    # if [[ $CIRCLE_BRANCH != "$IS_PRERELEASE" ]]; then
+    # # Upload example code release
+    # echo "--------------------------------------------------------------"
+    # echo "git tag before the github-release != prerelease"
+    # git tag
+    # echo "--------------------------------------------------------------"
     # yarn github-release edit \
     # --user $CIRCLE_PROJECT_USERNAME \
     # --repo $CIRCLE_PROJECT_REPONAME \
     # --tag ${GIT_TAG} \
     # --name "Test Report v${GIT_TAG}" \
-    if [[ $CIRCLE_BRANCH != "$IS_PRERELEASE" ]]; then
-    # Upload example code release
-    echo "--------------------------------------------------------------"
-    echo "git tag before the github-release != prerelease"
-    git tag
-    echo "--------------------------------------------------------------"
-    yarn github-release edit \
-    --user $CIRCLE_PROJECT_USERNAME \
-    --repo $CIRCLE_PROJECT_REPONAME \
-    --tag ${GIT_TAG} \
-    --name "Test Report v${GIT_TAG}" \
-
-    else
-    # Upload example code release
-    echo "--------------------------------------------------------------"
-    echo "git tag before the github-release"
-    git tag
-    echo "--------------------------------------------------------------"
-    yarn github-release edit \
-    --user $CIRCLE_PROJECT_USERNAME \
-    --repo $CIRCLE_PROJECT_REPONAME \
-    --tag ${GIT_TAG} \
-    --name "Test Report v${GIT_TAG}" \
-    --pre-release
-
-    fi
+    # else
+    # # Upload example code release
+    # echo "--------------------------------------------------------------"
+    # echo "git tag before the github-release"
+    # git tag
+    # echo "--------------------------------------------------------------"
+    # yarn github-release edit \
+    # --user $CIRCLE_PROJECT_USERNAME \
+    # --repo $CIRCLE_PROJECT_REPONAME \
+    # --tag ${GIT_TAG} \
+    # --name "Test Report v${GIT_TAG}" \
+    # --pre-release
+    # fi
     
     # Update develop branch
     git fetch origin develop
