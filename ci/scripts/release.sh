@@ -31,13 +31,18 @@ if [[ $GITHUB_COMMIT_MESSAGE != *"ci(release): generate CHANGELOG.md for version
     IS_PRERELEASE="$( cut -d '-' -f 2 <<< "$CIRCLE_BRANCH" )";
     if [[ $CIRCLE_BRANCH != "$IS_PRERELEASE" ]]; then
         PREFIX_PRERELEASE="$( cut -d '.' -f 1 <<< "$IS_PRERELEASE" )";
-        yarn standard-version --skip.bump=true --prerelease "$PREFIX_PRERELEASE" -m "ci(release): generate CHANGELOG.md for version %s"
+        yarn standard-version --skip.bump=true -m "ci(release): generate CHANGELOG.md for version %s" --prerelease "$PREFIX_PRERELEASE"
     echo "--------------------------------------------------------------"
+    echo "git tag after prerelease"
     git tag
     echo "--------------------------------------------------------------"
     
     else
         yarn standard-version -m "ci(release): generate CHANGELOG.md for version %s"
+        echo "--------------------------------------------------------------"
+    echo "git tag in else, You shall not see me"
+    git tag
+    echo "--------------------------------------------------------------"
     fi
     # Get version number from package.json
     export GIT_TAG=$(jq -r ".version" package.json)
@@ -47,9 +52,6 @@ if [[ $GITHUB_COMMIT_MESSAGE != *"ci(release): generate CHANGELOG.md for version
     git push --follow-tags origin $CIRCLE_BRANCH
     # Create release with conventional-github-releaser
     yarn conventional-github-releaser -p angular -t $GITHUB_TOKEN
-echo "--------------------------------------------------------------"
-    git tag
-    echo "--------------------------------------------------------------"
     # get gem path
     GEM=$(find ./ -name '*.gem')
 
