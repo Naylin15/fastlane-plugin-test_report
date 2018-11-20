@@ -25,20 +25,16 @@
 
 GITHUB_COMMIT_MESSAGE=$(git log --format=oneline -n 1 ${CIRCLE_SHA1})
 
-# Get version number from package.json
-    export GIT_TAG=$(jq -r ".version" package.json)
-
 if [[ $GITHUB_COMMIT_MESSAGE != *"ci(release): generate CHANGELOG.md for version"* ]]; then
 
     # Generate CHANGELOG.md and increment version
-    IS_PRERELEASE="$( cut -d '-' -f 2 <<< "$GIT_TAG" )";
+    IS_PRERELEASE="$( cut -d '-' -f 2 <<< "$CIRCLE_BRANCH" )";
 
     if [[ $CIRCLE_BRANCH != "$IS_PRERELEASE" ]]; then
         PREFIX_PRERELEASE="$( cut -d '.' -f 1 <<< "$IS_PRERELEASE" )";
-        yarn standard-version --skip.bump=true -m "ci(release): generate CHANGELOG.md for version %s" 
-        # --prerelease "$PREFIX_PRERELEASE"
+        yarn standard-version -t '' --skip.bump=true -m "ci(release): generate CHANGELOG.md for version %s" --prerelease "$PREFIX_PRERELEASE"
     else
-        yarn standard-version --skip.bump=true -m "ci(release): generate CHANGELOG.md for version %s"
+        yarn standard-version -t '' --skip.bump=true -m "ci(release): generate CHANGELOG.md for version %s"
     fi
 
     # Copy CHANGELOG.md to gh-pages branch
@@ -47,33 +43,24 @@ if [[ $GITHUB_COMMIT_MESSAGE != *"ci(release): generate CHANGELOG.md for version
     # Push commits and tags to origin branch
     git push --follow-tags origin $CIRCLE_BRANCH
     
+    # Get version number from package.json
+    export GIT_TAG=$(jq -r ".version" package.json)
+
     # Create release with conventional-github-releaser
     yarn conventional-github-releaser -p angular -t $GITHUB_TOKEN
 
-    # if [[ $CIRCLE_BRANCH != "$IS_PRERELEASE" ]]; then
-    # # Upload example code release
-    # echo "--------------------------------------------------------------"
-    # echo "git tag before the github-release != prerelease"
-    # git tag
-    # echo "--------------------------------------------------------------"
-    # yarn github-release edit \
-    # --user $CIRCLE_PROJECT_USERNAME \
-    # --repo $CIRCLE_PROJECT_REPONAME \
-    # --tag ${GIT_TAG} \
-    # --name "Test Report v${GIT_TAG}" \
-    # else
-    # # Upload example code release
-    # echo "--------------------------------------------------------------"
-    # echo "git tag before the github-release"
-    # git tag
-    # echo "--------------------------------------------------------------"
+    yarn github-release edit \
+    --user $CIRCLE_PROJECT_USERNAME \
+    --repo $CIRCLE_PROJECT_REPONAME \
+    --tag ${GIT_TAG} \
+    --name "Test Report v${GIT_TAG}" \
+
     # yarn github-release edit \
     # --user $CIRCLE_PROJECT_USERNAME \
     # --repo $CIRCLE_PROJECT_REPONAME \
     # --tag ${GIT_TAG} \
     # --name "Test Report v${GIT_TAG}" \
     # --pre-release
-    # fi
     
     # Update develop branch
     git fetch origin develop
